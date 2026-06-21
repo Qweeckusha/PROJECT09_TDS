@@ -1,6 +1,1 @@
-# Ассистент удалённых встреч (АУВ)
-
-## Stack
-- faster-whisper
-- pyannote.audio
-- ollama
+# PROJECT09_TDS (Transcribe-Diarize-Summarize)
