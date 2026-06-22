@@ -1,5 +1,6 @@
 .venv
+.cenv # conda env
 .idea
 task.md
 input
-1.txt
+.env
