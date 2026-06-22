@@ -67,11 +67,10 @@ class Transcriber:
 
 if __name__ == "__main__":
 
-    audio_file1 = "A:/MLProjs/PR09-tds/input/1.ogg"
-    audio_file2 = "A:/MLProjs/PR09-tds/input/2.ogg"
+    audio_file1 = "A:/MLProjs/PR09-tds/input/3.ogg"
+    audio_file2 = "A:/MLProjs/PR09-tds/input/1.ogg"
 
     t = Transcriber()
 
     # Строка вызова
     print(t.transcribe_audio(audio_path=audio_file1))
-    print(t.transcribe_audio(audio_path=audio_file2))
