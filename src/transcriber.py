@@ -1,6 +1,9 @@
 from faster_whisper import WhisperModel
 from pathlib import Path
 
+import torch
+print(torch.__version__)
+print(torch.cuda.is_available())
 
 class Transcriber:
     """
@@ -64,8 +67,8 @@ class Transcriber:
 
 if __name__ == "__main__":
 
-    audio_file1 = "A:/MLProjs/PR09-tds/1.ogg"
-    audio_file2 = "A:/MLProjs/PR09-tds/2.ogg"
+    audio_file1 = "A:/MLProjs/PR09-tds/input/1.ogg"
+    audio_file2 = "A:/MLProjs/PR09-tds/input/2.ogg"
 
     t = Transcriber()
 
