@@ -1,8 +1,6 @@
 import torch
 import torchaudio
 from pyannote.audio import Pipeline
-import os
-from dotenv import load_dotenv
 from pyannote.core import Annotation
 
 
@@ -15,15 +13,13 @@ class CustomDiarizer:
         2. Метод build_diarize_to_list() можно вызывать для множества файлов
     """
 
-    def __init__(self, token: str, model: str = "pyannote/speaker-diarization-community-1"):
+    def __init__(self, token: str | bool = None, model: str = "pyannote/speaker-diarization-community-1"):
         """
         :param model: модель для диаризации
-        :param token: уникальный токен Huggingface_HUB
+        :param token: уникальный токен Huggingface_HUB, обязателен только для загрузки модели
         """
 
-        self.pipeline = Pipeline.from_pretrained(
-            model, token=token
-        )
+        self.pipeline = Pipeline.from_pretrained(model, token=token)
         self.pipeline.to(torch.device("cuda"))
 
     def _load_and_preprocess(self, path: str) -> dict:
@@ -65,14 +61,16 @@ class CustomDiarizer:
         annotation = self.MethodDeirize(path)
         result = []
         for turn, _, speaker in annotation.itertracks(yield_label=True):
-            result.append({"start": turn.start, "end": turn.end, "specker": speaker})
+            result.append({"start": turn.start, "end": turn.end, "speaker": speaker})
 
         return result
 
 
+import os
+from dotenv import load_dotenv
 load_dotenv()
 token = os.getenv("HF_TOKEN")
 audio_path = "A:/MLProjs/PR09-tds/input/3.ogg"
 print("\n=== РЕЗУЛЬТАТ ДИАРИЗАЦИИ ===")
-print(CustomDiarizer(token=token).build_diarize_to_list(path=audio_path))
+print(CustomDiarizer().build_diarize_to_list(path=audio_path))
 
