@@ -45,7 +45,7 @@ class CustomDiarizer:
 
         :param path: путь к аудиофайлу
 
-        :return: Annotation = (turn (start, end), id, specker)
+        :return: Annotation кортеж: (turn = (start, end), id, specker)
         """
         return self.pipeline(self._load_and_preprocess(path)).speaker_diarization
 
@@ -64,13 +64,4 @@ class CustomDiarizer:
             result.append({"start": turn.start, "end": turn.end, "speaker": speaker})
 
         return result
-
-
-import os
-from dotenv import load_dotenv
-load_dotenv()
-token = os.getenv("HF_TOKEN")
-audio_path = "A:/MLProjs/PR09-tds/input/3.ogg"
-print("\n=== РЕЗУЛЬТАТ ДИАРИЗАЦИИ ===")
-print(CustomDiarizer().build_diarize_to_list(path=audio_path))
 
