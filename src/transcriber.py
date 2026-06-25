@@ -9,7 +9,7 @@ print(torch.cuda.is_available())
 
 class Transcriber:
     """
-    Класс транскрибатора для получения временных меток и сырого текста из аудио файла
+    Класс транскрибирования для получения временных меток и сырого текста из аудио файла
 
     faster-whisper
     """
@@ -20,14 +20,13 @@ class Transcriber:
                  device: str ="cuda",
                  compute_type: str ="float16"):
         """
-                Инициализация модели транскрибации
-                Args:
-                    model_size: размер модели (tiny, base, small, medium, large-v3)
-                    device: default="cuda", auto, cpu
-                    compute_type: режим вычисления или же квантизация (int8 / float16)
+        Инициализация модели транскрибирования
 
-
-                """
+        Args:
+            model_size: размер модели (tiny, base, small, medium, large-v3)
+            device: default="cuda", auto, cpu
+            compute_type: режим вычисления или же квантизация (int8 / float16)
+        """
 
         self.model = WhisperModel(
             model_size,
@@ -37,9 +36,11 @@ class Transcriber:
 
     def _load_and_preprocess(self, path: str) -> np.ndarray:
         """
-        Обрабатывает файл по контракту faster-whisper перед транскрибацией и загружает в память
+        Обрабатывает файл по контракту faster-whisper перед транскрибированием и загружает в память
 
-        :param path: путь к аудио фвйлу
+        Контракт: Аудио файл 16 кГц в Моно формате
+
+        :param path: путь к аудио файлу
         :return: numpy array формы (N,) [-1.0, 1.0]
         """
 
