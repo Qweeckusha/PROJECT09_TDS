@@ -1,11 +1,5 @@
 from faster_whisper import WhisperModel
 from pathlib import Path
-import numpy as np
-import subprocess
-
-import torch
-print(torch.__version__)
-print(torch.cuda.is_available())
 
 class Transcriber:
     """
@@ -13,7 +7,6 @@ class Transcriber:
 
     faster-whisper
     """
-
 
     def __init__(self,
                  model_size: str ="medium",
@@ -23,44 +16,16 @@ class Transcriber:
         Инициализация модели транскрибирования
 
         Args:
-            model_size: размер модели (tiny, base, small, medium, large-v3)
-            device: default="cuda", auto, cpu
-            compute_type: режим вычисления или же квантизация (int8 / float16)
+            model_size: размер модели
+            device: при помощи чего обрабатывать CPU или GPU
+            compute_type: режим вычисления или же квантизация
         """
 
         self.model = WhisperModel(
             model_size,
-            device,
+            device=device,
             compute_type=compute_type
         )
-
-    def _load_and_preprocess(self, path: str) -> np.ndarray:
-        """
-        Обрабатывает файл по контракту faster-whisper перед транскрибированием и загружает в память
-
-        Контракт: Аудио файл 16 кГц в Моно формате
-
-        :param path: путь к аудио файлу
-        :return: numpy array формы (N,) [-1.0, 1.0]
-        """
-
-        cmd = [
-            "ffmpeg",
-            "-i", str(path),
-            "-ar", "16000",
-            "-ac", "1",
-            "-f", "f32le",
-            "-acodec", "pcm_f32le",
-            "pipe:1"
-        ]
-
-        proccess = subprocess.run(
-            cmd,
-            capture_output=True,
-            check=True,
-        )
-
-        return np.frombuffer(proccess.stdout, dtype=np.float32)
 
     def transcribe_audio(self,
                          audio_path: str | Path,
@@ -76,20 +41,18 @@ class Transcriber:
            list[dict]: Список сегментов вида:
                 [{"start": 0.0, "end": 5.42, "text": "Привет!"}, ...]
         """
-        audio = self._load_and_preprocess(audio_path)
 
-        segments, info = self.model.transcribe(
-            audio,
+        segments, _ = self.model.transcribe(
+            str(audio_path),
             language=language,
-            beam_size=5
+            beam_size=5,
+            vad_filter=True
         )
 
-        data = []
-        for segment in segments:
-            data.append({
+        return [
+            {
                 "start": segment.start,
                 "end": segment.end,
                 "text": segment.text.strip()
-            })
-
-        return data
+            } for segment in segments
+        ]
