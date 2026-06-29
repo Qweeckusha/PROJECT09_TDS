@@ -17,6 +17,10 @@ class URLRequest(BaseModel):
     audio_url: HttpUrl
 
 
+class PathRequest(BaseModel):
+    audio_path: str
+
+
 class SummarizeResponse(BaseModel):
     status: str
     summary: str | None = None
@@ -63,6 +67,47 @@ async def summarize_audio(request: URLRequest):
     finally:
         # Гарантированная очистка
         file_path.unlink(missing_ok=True)
+
+
+@app.post("/summarize_path", response_model=SummarizeResponse)
+async def summarize_from_path(request: PathRequest):
+    """Суммаризация аудио по локальному пути (для тестирования)."""
+
+    file_path = Path(request.audio_path)
+
+    # Проверка существования файла
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"Файл не найден: {file_path}")
+
+    if not file_path.is_file():
+        raise HTTPException(status_code=400, detail=f"Путь не является файлом: {file_path}")
+
+    try:
+        summary = summarizer.get_text_from_llm(str(file_path))
+        return SummarizeResponse(status="success", summary=summary)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка обработки: {e}")
+
+@app.post("/full_txt_path", response_model=SummarizeResponse)
+async def full_txt_from_path(request: PathRequest):
+    """получение текста из аудио по локальному пути (для тестирования)."""
+
+    file_path = Path(request.audio_path)
+
+    # Проверка существования файла
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"Файл не найден: {file_path}")
+
+    if not file_path.is_file():
+        raise HTTPException(status_code=400, detail=f"Путь не является файлом: {file_path}")
+
+    try:
+        summary = summarizer.get_full_text_from_audio(str(file_path))
+        return SummarizeResponse(status="success", summary=summary)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка обработки: {e}")
 
 @app.get("/health")
 def health():
