@@ -1,7 +1,9 @@
+import subprocess
+from pathlib import Path
+
+import config
 import torch
-import torchaudio
 from pyannote.audio import Pipeline
-from pyannote.core import Annotation
 
 
 class CustomDiarizer:
@@ -13,55 +15,53 @@ class CustomDiarizer:
         2. Метод build_diarize_to_list() можно вызывать для множества файлов
     """
 
-    def __init__(self, token: str | bool = None, model: str = "pyannote/speaker-diarization-community-1"):
+    def __init__(self, token: str = config.token, model: str = config.DIARIZATION_model ):
         """
         :param model: модель для диаризации
         :param token: уникальный токен Huggingface_HUB, обязателен только для загрузки модели
         """
 
         self.pipeline = Pipeline.from_pretrained(model, token=token)
-        self.pipeline.to(torch.device("cuda"))
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.pipeline.to(device)
 
-    def _load_and_preprocess(self, path: str) -> dict:
-        """
-        Приватный метод для загрузки и предобработки
+    def _preprocess_audio(self, path: str) -> str:
+        """Конвертирует аудио в 16 кГц моно WAV для совместимости с pyannote."""
+        path_obj = Path(path)
 
-        :param path: путь к аудиофайлу
+        if path_obj.suffix.lower() == ".wav":
+            return path
 
-        :return: словарь с тензором аудиофайла и его частота
-        """
-        waveform, sample_rate = torchaudio.load(path)
+        wav_path = path_obj.with_suffix(".wav")
+        if not wav_path.exists():
+            subprocess.run([
+                "ffmpeg", "-i", str(path_obj),
+                "-ar", "16000", "-ac", "1",
+                "-y",
+                str(wav_path)
+            ], check=True, capture_output=True)
 
-        if sample_rate != 16000:
-            resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
-            waveform = resampler(waveform)
-            sample_rate = 16000
+        return str(wav_path)
 
-        return {"waveform": waveform, "sample_rate": sample_rate}
-
-    def MethodDeirize(self, path : str) -> Annotation:
-        """
-        Основной конвейер диаризации, который возвращает для каждого файла по сегментам времени - участников диалога
-
-        :param path: путь к аудиофайлу
-
-        :return: Annotation кортеж: (turn = (start, end), id, specker)
-        """
-        return self.pipeline(self._load_and_preprocess(path)).speaker_diarization
-
-    def build_diarize_to_list(self, path : str) -> list[dict]:
+    def Diarization(self, path : str) -> list[dict]:
         """
         Запаковка данных о записи в лист словарей.
 
-        :param path: путь к файлу
+        :param path: Путь к файлу
 
-        :returns: список словарей [{"start": 0.0, "end": 3.5, "speaker": "SPEAKER_00"}, ...]
+        :returns: список словарей [{"start": 0.0, "end": 5.5, "speaker": "SPEAKER_00"}, ...]
         """
+        preprocessed_path = self._preprocess_audio(path)
+        try:
+            result = self.pipeline(preprocessed_path).speaker_diarization.itertracks(yield_label=True)
 
-        annotation = self.MethodDeirize(path)
-        result = []
-        for turn, _, speaker in annotation.itertracks(yield_label=True):
-            result.append({"start": turn.start, "end": turn.end, "speaker": speaker})
-
-        return result
-
+            return [
+                {
+                    "start": turn.start,
+                    "end": turn.end,
+                    "speaker": speaker,
+                } for turn, _, speaker in result
+            ]
+        finally:
+            if preprocessed_path != path and Path(preprocessed_path).exists():
+                Path(preprocessed_path).unlink()
