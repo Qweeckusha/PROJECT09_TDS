@@ -1,10 +1,9 @@
-import os
 from datetime import datetime
 from pathlib import Path
 
-from config import FULL_TEXT_DIR, save_full_text_file, save_tds_file, TDS_DIR, prompt, model_name
-from diarizer import CustomDiarizer
-from transcriber import Transcriber
+from config import FULL_TEXT_DIR, save_full_text_file, save_tds_file, TDS_DIR, prompt, ollama_llm
+from .diarizer import CustomDiarizer
+from .transcriber import Transcriber
 
 import ollama as ol
 
@@ -12,7 +11,7 @@ import ollama as ol
 class Summarizer:
     def __init__(self):
         self.transcriber = Transcriber()
-        self.diarizer = CustomDiarizer(token=os.getenv("HF_TOKEN"))
+        self.diarizer = CustomDiarizer()
 
     def _align_segments(self, whisper_seg: list[dict], diarizer_seg: list[dict]) -> list[dict]:
         """
@@ -79,12 +78,12 @@ class Summarizer:
         :return: полный текст прошедший стандартный pipeline
         """
         if not align_segs:
-            return "ERROR: _align_segments return did nothing"
-
-        lines = []
+            raise ValueError("Нет сегментов для форматирования (возможно, в аудио нет речи)")
 
         speakers = {seg.get("speaker", "UNKNOWN") for seg in align_segs}
         is_monologue = len(speakers) == 1
+
+        lines = []
 
         for seg in align_segs:
             speaker = seg.get("speaker", "UNKNOWN")
@@ -106,13 +105,9 @@ class Summarizer:
         :param path: путь к аудиофайлу
         :return: возвращает полный текст транскрибированный и диаризованный
         """
+        whisper_seg = self.transcriber.transcribe_audio(path)
+        diarizer_seg = self.diarizer.Diarization(path)
 
-        try:
-            whisper_seg = self.transcriber.transcribe_audio(path)
-            diarizer_seg = self.diarizer.build_diarize_to_list(path)
-        except Exception as e:
-            print(e)
-            return "ERROR: Не удалось выполнить стандартный Pipeline. ADDR: summary.get_full_text_from_audio"
 
         align = self._align_segments(whisper_seg, diarizer_seg)
         text = self._format_full_text(align)
@@ -120,19 +115,19 @@ class Summarizer:
             self._save_text(path, text)
         return text
 
-    def _save_text(self, path: str, text: str, isLLM: bool = False) -> None:
+    def _save_text(self, path: str, text: str, is_LLM: bool = False) -> None:
         """
         Сохраняет текст в кэш в виде .txt файла
 
         :param path: путь к аудиофайлу, но нужен для названия output файлов
         :param text: текст для записи в файл
-        :param isLLM: bool переменная для разделения по директориям
+        :param is_LLM: bool переменная для разделения по директориям
         :return: None возвращать нечего, по сути функция просто выполняет свою задачу и не обязана отчитываться
         """
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         source_name = Path(path).stem
-        if isLLM:
+        if is_LLM:
             TDS_DIR.mkdir(exist_ok=True)
             file_path = TDS_DIR / f"TDS-audio_{source_name}_{timestamp}.txt"
         else:
@@ -140,9 +135,9 @@ class Summarizer:
             file_path = FULL_TEXT_DIR / f"transcribed-audio_{source_name}_{timestamp}.txt"
 
         file_path.write_text(text, encoding="utf-8")
-        return None
 
-    def get_text_from_llm(self, model_name: str, path: str) -> str:
+
+    def get_text_from_llm(self, path: str) -> str:
         """
         Полный Pipeline (FPl) - выполняет конечную роль - суммаризация текста, определение выводов и важных тезисов при помощи LLM
 
@@ -154,31 +149,25 @@ class Summarizer:
         audio_text = self.get_full_text_from_audio(path)
 
 
-        try:
-            response: ol.ChatResponse = ol.chat(model=model_name,
-                                                    messages=[
-                                                        {
-                                                            "role": "system",
-                                                            "content": prompt
-                                                        },
-                                                        {
-                                                            "role": "user",
-                                                            "content": audio_text
-                                                        }
-                                                    ])
-            llm_output = response.message.content
-        except Exception as e:
-            print(f'Ошибка при работе с LLM: [{e}]')
-            return "ERROR: не удалось получить саммари от LLM. ADDR: summary.get_text_from_llm"
+
+        response: ol.ChatResponse = ol.chat(model=ollama_llm,
+                                            messages=[
+                                                    {
+                                                        "role": "system",
+                                                        "content": prompt
+                                                    },
+                                                    {
+                                                        "role": "user",
+                                                        "content": audio_text
+                                                    }
+                                                ])
+        llm_output = response.message.content
 
         if save_tds_file:
-            self._save_text(path, llm_output, isLLM=True)
+            self._save_text(path, llm_output, is_LLM=True)
 
         return llm_output
 
 
-
-
-
-text = Summarizer().get_text_from_llm(model_name=model_name, path="A:/MLProjs/PR09-tds/input/3.ogg")
-print(text)
+# text = Summarizer().get_text_from_llm(path="A:/MLProjs/PR09-tds/input/3.ogg")
+# print(text)
