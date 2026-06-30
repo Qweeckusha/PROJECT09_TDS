@@ -1,0 +1,17 @@
+name: tds-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - ffmpeg=7.1.1
+  - pip:
+    - faster-whisper==1.2.1
+    - pyannote.audio==4.0.5
+    - fastapi==0.138.1
+    - uvicorn==0.49.0
+    - ollama==0.6.2
+    - httpx==0.28.1
+    - huggingface-hub==1.20.1
+    - pydantic==2.13.4

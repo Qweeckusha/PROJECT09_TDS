@@ -15,7 +15,7 @@ class CustomDiarizer:
         2. Метод build_diarize_to_list() можно вызывать для множества файлов
     """
 
-    def __init__(self, token: str = config.token, model: str = config.DIARIZATION_model ):
+    def __init__(self, token: str = config.TOKEN, model: str = config.DIARIZATION_MODEL):
         """
         :param model: модель для диаризации
         :param token: уникальный токен Huggingface_HUB, обязателен только для загрузки модели

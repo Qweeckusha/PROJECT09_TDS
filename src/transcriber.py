@@ -1,3 +1,4 @@
+from config import WHISPER_MODEL, DEVICE, COMPUTE_TYPE
 from faster_whisper import WhisperModel
 from pathlib import Path
 
@@ -9,9 +10,9 @@ class Transcriber:
     """
 
     def __init__(self,
-                 model_size: str ="medium",
-                 device: str ="cuda",
-                 compute_type: str ="float16"):
+                 model_size: str = WHISPER_MODEL,
+                 device: str = DEVICE,
+                 compute_type: str = COMPUTE_TYPE):
         """
         Инициализация модели транскрибирования
 

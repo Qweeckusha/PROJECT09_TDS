@@ -1,0 +1,8 @@
+.venv
+.cenv
+.idea
+task.md
+input
+.env
+cache
+hf_token.txt
