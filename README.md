@@ -38,7 +38,7 @@ docker build --secret id=hf_token,src=hf_token.txt -t tds-api:conda-env .
 
 > По умолчанию в Docker версии Linux может быть отключено специальное DNS-имя.
 > 
-> Тогда нужно добавит флаг `--add-host host.docker.internal:host-gateway`
+> Тогда нужно добавит флаг `--add-host host.docker.internal:host-gateway` или указать gateway docker-сети `172.17.0.1` вместо DNS
 
 ```bash
 
