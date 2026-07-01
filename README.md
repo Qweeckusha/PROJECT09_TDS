@@ -36,6 +36,10 @@ docker build --secret id=hf_token,src=hf_token.txt -t tds-api:conda-env .
 Далее запуск контейнера.
 Важно передать OLLAMA_HOST для работы полного пайплайна.
 
+> По умолчанию в Docker версии Linux может быть отключено специальное DNS-имя.
+> 
+> Тогда нужно добавит флаг `--add-host host.docker.internal:host-gateway`
+
 ```bash
 
 docker run --gpus all -p 9012:9012 -e OLLAMA_HOST=http://host.docker.internal:11434 --name tds-api tds-api:conda-env
