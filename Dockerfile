@@ -19,12 +19,15 @@ RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkg
 RUN conda env create -f environment.yml && \
     conda clean -afy
 
+ENV LD_LIBRARY_PATH=/opt/conda/envs/tds-env/lib:$LD_LIBRARY_PATH
+
 SHELL ["conda", "run", "-n", "tds-env", "/bin/bash", "-c"]
 
 RUN pip install --no-cache-dir \
     torch==2.11.0 \
     torchaudio==2.11.0 \
     torchvision==0.26.0 \
+    nvidia-cublas-cu12 \
     --extra-index-url https://download.pytorch.org/whl/cu130
 
 COPY . .
@@ -38,6 +41,8 @@ RUN hf download ${WHISPER_MODEL_REPO}
 
 ENV HF_HUB_OFFLINE=1
 
+ENV PYTHONUNBUFFERED=1
+
 EXPOSE 9012
 
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "9012"]
+CMD ["conda", "run", "-n", "tds-env", "uvicorn", "api:app", "--host", "0.0.0.0", "--port", "9012"]
