@@ -44,3 +44,9 @@ docker run --gpus all -p 9012:9012 --name tds-api tds-api:conda-env
 ## Technical requirements
 
 - Версия CUDA - 13.0+
+
+Для проверки версии:
+```bash
+
+nvidia-smi
+```
