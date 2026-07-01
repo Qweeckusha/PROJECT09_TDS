@@ -2,15 +2,16 @@
 
 > docs-ver: 0.1
 
+Система работает изолированно от сети Интернет и не обращается в сеть, например, на huggingface за токеном. 
 
-## Stack
+## Окружение
 - Ollama
 - faster-whisper
 - pyannote.audio
 - torch 2.11
 - FastAPI
 
-## Scheme
+## Схема
 ```
                 Стандартный Pipeline (StdPl)
 +-------------------------------------------------------+                
@@ -24,7 +25,7 @@
 +-------------------------------------------------------+
 ```
 
-## Deploy
+## Разворачивание
 Для деплоя можно использовать исходные файлы в этом репозитории.
 > Необходимо получить Huggingface-token с принятой лицензией в gated модели. https://huggingface.co/pyannote/speaker-diarization-community-1
 
@@ -46,7 +47,7 @@ docker run --gpus all -p 9012:9012 -e OLLAMA_HOST=http://host.docker.internal:11
 ```
 
 
-## Technical requirements
+## Технические зависимости
 
 - Версия CUDA - 13.0+
 
