@@ -65,7 +65,6 @@ async def summarize_audio(request: URLRequest):
         raise HTTPException(status_code=500, detail=f"Ошибка обработки: {e}")
 
     finally:
-        # Гарантированная очистка
         file_path.unlink(missing_ok=True)
 
 
